@@ -9,9 +9,9 @@ from fpdf import FPDF
 app = Flask(__name__)
 
 # Configurações da API do Azure
-subscription_key = 'YOUR_AZURE_TRANSLATOR_KEY'
+subscription_key = '683d4d5e89244d31b649623d60c684ff'
 endpoint = 'https://api.cognitive.microsofttranslator.com'
-location = 'YOUR_RESOURCE_LOCATION'
+location = 'francecentral'
 
 
 @app.route('/')
