@@ -1,44 +1,70 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const recordBtn = document.getElementById('record-btn');
-    const translateBtn = document.getElementById('translate-btn');
-    const speakBtn = document.getElementById('speak-btn');
-    const recordedText = document.getElementById('recorded-text');
-    const translatedText = document.getElementById('translated-text');
-    const languages = document.getElementById('languages');
+function translateText() {
+    const text = document.getElementById('text-to-translate').value;
+    const language = document.getElementById('language-select').value;
 
-    recordBtn.addEventListener('click', () => {
-        // Gravação de áudio (este é um exemplo simples e não funcional)
-        alert('Gravação de áudio não implementada.');
-    });
+    fetch('/translate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: text, language: language }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('translated-text').innerText = data.translated_text;
+    })
+    .catch(error => console.error('Error:', error));
+}
 
-    translateBtn.addEventListener('click', () => {
-        const text = recordedText.value;
-        const language = languages.value;
+function speakText() {
+    const text = document.getElementById('translated-text').innerText;
 
-        fetch('/translate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: text, language: language }),
-        })
-        .then(response => response.json())
-        .then(data => {
-            translatedText.value = data.translated_text;
-        })
-        .catch(error => console.error('Erro:', error));
-    });
+    fetch('/speak', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: text }),
+    })
+    .catch(error => console.error('Error:', error));
+}
 
-    speakBtn.addEventListener('click', () => {
-        const text = translatedText.value;
+function startRecognition() {
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = 'pt-PT';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
 
-        fetch('/speak', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: text }),
-        })
-        .catch(error => console.error('Erro:', error));
-    });
-});
+    recognition.start();
+
+    recognition.onresult = function(event) {
+        const text = event.results[0][0].transcript;
+        document.getElementById('text-to-translate').value = text;
+    };
+
+    recognition.onspeechend = function() {
+        recognition.stop();
+    };
+
+    recognition.onerror = function(event) {
+        console.error('Speech recognition error detected: ' + event.error);
+    };
+}
+
+function uploadPDF() {
+    const formData = new FormData(document.getElementById('upload-form'));
+
+    fetch('/upload_pdf', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.getElementById('download-link');
+        link.href = url;
+        link.download = 'translated.pdf';
+        link.style.display = 'block';
+    })
+    .catch(error => console.error('Error:', error));
+}
