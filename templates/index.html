@@ -11,49 +11,35 @@
         <h1>Tradutor de Texto para Fala</h1>
         <div class="form-group">
             <label for="text-to-translate">Texto Gravado:</label>
-            <textarea id="text-to-translate" placeholder="Digite o texto para traduzir"></textarea>
-        </div>
-        <div class="form-group">
-            <button id="microphone-button" type="button" onclick="startRecognition()">
-                <img src="{{ url_for('static', filename='images/microfone.png') }}" alt="Microfone">
+            <textarea id="text-to-translate" rows="5"></textarea>
+            <button onclick="startRecognition()">
+                <img src="https://img.icons8.com/ios-glyphs/30/000000/microphone.png"/>
             </button>
         </div>
         <div class="form-group">
             <label for="language-select">Selecionar Idioma:</label>
             <select id="language-select">
+                <option value="en">Inglês</option>
                 <option value="es">Espanhol</option>
                 <option value="fr">Francês</option>
-                <option value="de">Alemão</option>
-                <option value="en">Inglês</option>
-                <!-- Adicione mais opções de idiomas conforme necessário -->
+                <!-- Adicione mais opções conforme necessário -->
             </select>
-        </div>
-        <div class="form-group">
-            <button id="translate-button" type="button" onclick="translateText()">
-                <img src="{{ url_for('static', filename='images/traduzir.png') }}" alt="Traduzir">
+            <button onclick="translateText()">
+                <img src="https://img.icons8.com/ios-glyphs/30/000000/google-translate.png"/>
             </button>
         </div>
         <div class="form-group">
             <label for="translated-text">Texto Traduzido:</label>
-            <textarea id="translated-text" readonly></textarea>
+            <textarea id="translated-text" rows="5" readonly></textarea>
+            <button onclick="speakText()">Reproduzir Tradução</button>
         </div>
         <div class="form-group">
-            <button id="speak-button" type="button" onclick="speakText()">Reproduzir Tradução</button>
-        </div>
-        <div class="form-group">
-            <h2>Upload de PDF para Tradução</h2>
             <form id="upload-form" enctype="multipart/form-data">
-                <input type="file" id="file-input" name="file" accept=".pdf">
-                <select id="pdf-language-select" name="language">
-                    <option value="es">Espanhol</option>
-                    <option value="fr">Francês</option>
-                    <option value="de">Alemão</option>
-                    <option value="en">Inglês</option>
-                    <!-- Adicione mais opções de idiomas conforme necessário -->
-                </select>
-                <button type="button" onclick="uploadPDF()">Enviar PDF</button>
+                <label for="pdf-file">Carregar PDF:</label>
+                <input type="file" id="pdf-file" name="file" accept=".pdf">
+                <button type="button" onclick="uploadPDF()">Traduzir PDF</button>
             </form>
-            <a id="download-link" style="display:none;">Baixar PDF Traduzido</a>
+            <a id="download-link" style="display: none;">Baixar PDF Traduzido</a>
         </div>
     </div>
     <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>

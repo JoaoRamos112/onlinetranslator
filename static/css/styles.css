@@ -1,41 +1,15 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
 .container {
-    text-align: center;
-    background: white;
+    max-width: 600px;
+    margin: 0 auto;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f7f7f7;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-.container {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
 
 h1 {
+    font-size: 24px;
     margin-bottom: 20px;
 }
 
@@ -43,75 +17,40 @@ h1 {
     margin-bottom: 20px;
 }
 
-textarea {
-    width: 100%;
-    height: 80px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    resize: none;
-}
-
-select, button {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-button img {
-    width: 30px;
-    height: 30px;
-}
-
-button#microphone-button {
-    background-color: #007bff;
-    color: white;
-}
-
-button#translate-button {
-    background-color: #28a745;
-    color: white;
-}
-
-button#speak-button {
-    background-color: #17a2b8;
-    color: white;
-}
-
-h1 {
-    margin-bottom: 20px;
-}
-
 label {
     display: block;
-    margin-top: 10px;
+    font-weight: bold;
+    margin-bottom: 5px;
 }
 
-textarea {
+textarea, select, input[type="file"] {
     width: 100%;
     padding: 10px;
-    margin-top: 5px;
-    margin-bottom: 20px;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 5px;
+    box-sizing: border-box;
 }
 
 button {
     padding: 10px 20px;
-    margin-top: 10px;
     border: none;
+    border-radius: 5px;
     background-color: #007bff;
     color: white;
-    border-radius: 4px;
+    font-size: 16px;
     cursor: pointer;
 }
 
 button img {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
 }
 
 button:hover {
     background-color: #0056b3;
+}
+
+#download-link {
+    display: block;
+    margin-top: 20px;
 }

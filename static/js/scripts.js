@@ -11,9 +11,17 @@ function translateText() {
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById('translated-text').innerText = data.translated_text;
+        if (data.translated_text) {
+            document.getElementById('translated-text').innerText = data.translated_text;
+        } else {
+            console.error('Error:', data);
+            alert('Error translating text. Please try again.');
+        }
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error translating text. Please try again.');
+    });
 }
 
 function speakText() {
@@ -26,7 +34,10 @@ function speakText() {
         },
         body: JSON.stringify({ text: text }),
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error speaking text. Please try again.');
+    });
 }
 
 function startRecognition() {
@@ -66,5 +77,8 @@ function uploadPDF() {
         link.download = 'translated.pdf';
         link.style.display = 'block';
     })
-    .catch(error => console.error('Error:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error uploading PDF. Please try again.');
+    });
 }
