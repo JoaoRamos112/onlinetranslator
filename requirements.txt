@@ -1,0 +1,5 @@
+Flask~=3.0.3
+SpeechRecognition
+googletrans==4.0.0-rc1
+pyttsx3~=2.90
+PyAudio~=0.2.14

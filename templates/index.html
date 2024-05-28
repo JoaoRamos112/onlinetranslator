@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tradutor de Texto para Fala</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Tradutor de Texto para Fala</h1>
+
+        <label for="recorded-text">Texto Gravado:</label>
+        <textarea id="recorded-text" rows="5" cols="55"></textarea><br>
+
+        <button id="record-btn"><img src="{{ url_for('static', filename='images/microfone.png') }}" alt="Gravar"></button><br>
+
+        <label for="languages">Selecionar Idioma:</label>
+        <select id="languages">
+            <option value="pt">Português</option>
+            <option value="en">Inglês</option>
+            <option value="es">Espanhol</option>
+            <option value="fr">Francês</option>
+            <option value="de">Alemão</option>
+            <option value="it">Italiano</option>
+            <option value="ja">Japonês</option>
+            <option value="ru">Russo</option>
+            <option value="nl">Holandês</option>
+            <option value="ar">Árabe</option>
+            <option value="hi">Hindi</option>
+            <option value="ko">Coreano</option>
+        </select><br>
+
+        <button id="translate-btn"><img src="{{ url_for('static', filename='images/traduzir.png') }}" alt="Traduzir"></button><br>
+
+        <label for="translated-text">Texto Traduzido:</label>
+        <textarea id="translated-text" rows="5" cols="55"></textarea><br>
+
+        <button id="speak-btn">Reproduzir Tradução</button>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
