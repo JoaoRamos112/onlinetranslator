@@ -12,7 +12,7 @@ function translateText() {
     .then(response => response.json())
     .then(data => {
         if (data.translated_text) {
-            document.getElementById('translated-text').innerText = data.translated_text;
+            document.getElementById('translated-text').value = data.translated_text;
         } else {
             console.error('Error:', data);
             alert('Error translating text. Please try again.');
@@ -25,7 +25,7 @@ function translateText() {
 }
 
 function speakText() {
-    const text = document.getElementById('translated-text').innerText;
+    const text = document.getElementById('translated-text').value;
 
     fetch('/speak', {
         method: 'POST',
@@ -33,6 +33,12 @@ function speakText() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ text: text }),
+    })
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audio.play();
     })
     .catch(error => {
         console.error('Error:', error);

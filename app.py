@@ -9,9 +9,9 @@ from fpdf import FPDF
 app = Flask(__name__)
 
 # Configurações da API do Azure
-subscription_key = '683d4d5e89244d31b649623d60c684ff'
+subscription_key = 'YOUR_AZURE_TRANSLATOR_KEY'
 endpoint = 'https://api.cognitive.microsofttranslator.com'
-location = 'francecentral'
+location = 'YOUR_RESOURCE_LOCATION'
 
 
 @app.route('/')
@@ -21,48 +21,59 @@ def index():
 
 @app.route('/translate', methods=['POST'])
 def translate():
-    data = request.get_json()
-    text = data.get('text')
-    dest_language = data.get('language')
+    try:
+        data = request.get_json()
+        text = data.get('text')
+        dest_language = data.get('language')
 
-    translated_text = translate_text(text, dest_language)
+        translated_text = translate_text(text, dest_language)
 
-    return jsonify({'translated_text': translated_text})
+        return jsonify({'translated_text': translated_text})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/speak', methods=['POST'])
 def speak():
-    data = request.get_json()
-    text = data.get('text')
+    try:
+        data = request.get_json()
+        text = data.get('text')
 
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
-    return '', 204
+        engine = pyttsx3.init()
+        audio_file = 'output.mp3'
+        engine.save_to_file(text, audio_file)
+        engine.runAndWait()
+
+        return send_file(audio_file, mimetype='audio/mpeg')
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['file']
+        file = request.files['file']
 
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'}), 400
 
-    if file and allowed_file(file.filename):
-        filename = os.path.join('uploads', file.filename)
-        file.save(filename)
+        if file and allowed_file(file.filename):
+            filename = os.path.join('uploads', file.filename)
+            file.save(filename)
 
-        dest_language = request.form.get('language')
-        translated_text = translate_pdf(filename, dest_language)
+            dest_language = request.form.get('language')
+            translated_text = translate_pdf(filename, dest_language)
 
-        translated_pdf_path = create_translated_pdf(translated_text)
+            translated_pdf_path = create_translated_pdf(translated_text)
 
-        return send_file(translated_pdf_path, as_attachment=True)
+            return send_file(translated_pdf_path, as_attachment=True)
 
-    return jsonify({'error': 'Invalid file type'}), 400
+        return jsonify({'error': 'Invalid file type'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 def allowed_file(filename):
