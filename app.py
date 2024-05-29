@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify, send_file
 import requests
 import uuid
-import pyttsx3
 import os
 from PyPDF2 import PdfReader
 from fpdf import FPDF
+import azure.cognitiveservices.speech as speechsdk
 
 app = Flask(__name__)
 
@@ -12,6 +12,9 @@ app = Flask(__name__)
 subscription_key = '683d4d5e89244d31b649623d60c684ff'
 endpoint = 'https://api.cognitive.microsofttranslator.com'
 location = 'francecentral'
+
+speech_key = '9cad95fdff5449f2bd01335c5b840dcc'
+speech_region = 'eastus'
 
 
 @app.route('/')
@@ -26,6 +29,9 @@ def translate():
         text = data.get('text')
         dest_language = data.get('language')
 
+        if not dest_language:
+            raise ValueError("Destination language is required")
+
         translated_text = translate_text(text, dest_language)
 
         return jsonify({'translated_text': translated_text})
@@ -39,10 +45,7 @@ def speak():
         data = request.get_json()
         text = data.get('text')
 
-        engine = pyttsx3.init()
-        audio_file = 'output.mp3'
-        engine.save_to_file(text, audio_file)
-        engine.runAndWait()
+        audio_file = generate_speech(text)
 
         return send_file(audio_file, mimetype='audio/mpeg')
     except Exception as e:
@@ -60,11 +63,15 @@ def upload_pdf():
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
 
+        dest_language = request.form.get('language')
+
+        if not dest_language:
+            return jsonify({'error': 'Destination language is required'}), 400
+
         if file and allowed_file(file.filename):
             filename = os.path.join('uploads', file.filename)
             file.save(filename)
 
-            dest_language = request.form.get('language')
             translated_text = translate_pdf(filename, dest_language)
 
             translated_pdf_path = create_translated_pdf(translated_text)
@@ -102,8 +109,11 @@ def translate_text(text, dest_language):
 
     response = requests.post(constructed_url, params=params, headers=headers, json=body)
     response_json = response.json()
-    translated_text = response_json[0]['translations'][0]['text']
 
+    if response.status_code != 200 or 'translations' not in response_json[0]:
+        raise ValueError(f"Translation API error: {response_json}")
+
+    translated_text = response_json[0]['translations'][0]['text']
     return translated_text
 
 
@@ -121,14 +131,29 @@ def translate_pdf(file_path, dest_language):
 def create_translated_pdf(translated_text):
     pdf = FPDF()
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.set_font("Arial", size=12)
     for line in translated_text.split('\n'):
-        pdf.multi_cell(0, 10, txt=line)
+        pdf.multi_cell(0, 10, txt=line.encode('latin-1', 'replace').decode('latin-1'))
 
     translated_pdf_path = os.path.join('uploads', 'translated.pdf')
-    pdf.output(translated_pdf_path)
+    pdf.output(translated_pdf_path, 'F')
     return translated_pdf_path
 
+
+def generate_speech(text):
+    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+    audio_config = speechsdk.audio.AudioOutputConfig(filename='output.mp3')
+
+    speech_config.speech_synthesis_voice_name = 'en-US-AvaMultilingualNeural'
+
+    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+    result = speech_synthesizer.speak_text_async(text).get()
+
+    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+        return 'output.mp3'
+    else:
+        raise Exception("Speech synthesis failed")
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
