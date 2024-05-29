@@ -8,17 +8,23 @@
 </head>
 <body>
     <div class="container">
-        <h1>Tradutor de Texto para Fala</h1>
+        <h1>Tradutor online</h1>
 
         <form id="translate-form">
-            <label for="text-input">Texto Gravado:</label>
+            <label for="text-input">Texto para tradução:</label>
             <textarea id="text-input" rows="4" cols="50"></textarea>
+
+            <button id="record-button">
+            <img src="/static/images/microfone.png" alt="Gravar">
+            </button>
+
 
             <label for="language-select">Selecionar Idioma:</label>
             <select id="language-select">
                 <option value="en">Inglês</option>
                 <option value="es">Espanhol</option>
                 <option value="fr">Francês</option>
+                <option value="it">Italiano</option>
                 <!-- Adicione mais opções de idiomas conforme necessário -->
             </select>
 
@@ -30,9 +36,6 @@
 
         <button id="speak-button">Reproduzir Tradução</button>
 
-        <button id="record-button">
-            <img src="/static/images/microfone.png" alt="Gravar">
-        </button>
 
         <h2>Upload de PDF</h2>
         <form id="pdf-form" enctype="multipart/form-data">
