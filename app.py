@@ -66,16 +66,14 @@ def translate():
 
 @app.route('/speak', methods=['POST'])
 def speak():
-    app.logger.info('Speak endpoint accessed')
     try:
         data = request.get_json()
         text = data.get('text')
 
         speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-        audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
         speech_config.speech_synthesis_voice_name = 'en-US-AvaNeural'
 
-        speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+        speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
 
         app.logger.debug(f'Generating speech for text: {text}')
         result = speech_synthesizer.speak_text_async(text).get()
@@ -89,7 +87,6 @@ def speak():
     except Exception as e:
         app.logger.error(f'Error generating speech: {str(e)}')
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
