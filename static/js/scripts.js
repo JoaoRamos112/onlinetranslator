@@ -88,6 +88,23 @@ recordButton.addEventListener('click', () => {
     recognition.start();
 });
 
+function speak(text) {
+    fetch('/speak', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: text })
+    })
+   .then(response => response.blob())
+   .then(blob => {
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audio.play();
+    })
+   .catch(error => console.error(error));
+}
+
 document.getElementById('speak-button').addEventListener('click', async function () {
     const textToSpeak = document.getElementById('translated-text').value;
 
