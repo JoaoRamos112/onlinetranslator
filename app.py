@@ -9,7 +9,7 @@ import redis
 
 app = Flask(__name__)
 
-# Configurações da API do Azuree
+# Configurações da API do Azure
 subscription_key = '683d4d5e89244d31b649623d60c684ff'
 endpoint = 'https://api.cognitive.microsofttranslator.com'
 location = 'francecentral'
@@ -18,7 +18,7 @@ location = 'francecentral'
 speech_key = '9cad95fdff5449f2bd01335c5b840dcc'
 speech_region = 'eastus'
 
-# Configurações do Redis
+# Configurações do Azure Redis
 redis_host = 'translatorcn.redis.cache.windows.net'
 redis_port = 6379
 redis_password = 'QruzOK0wvBVyH96TnipvG3BNYSeSN9YDWAzCaHucXiI='
@@ -33,7 +33,7 @@ def index():
     app.logger.info('Index page accessed')
     return render_template('index.html')
 
-
+#POST da tradução
 @app.route('/translate', methods=['POST'])
 def translate():
     app.logger.info('Translate endpoint accessed')
@@ -47,7 +47,6 @@ def translate():
 
         app.logger.debug(f'Translating text: {text} to {dest_language}')
 
-        # Verificar o cache do Redis
         cached_translation = get_translation_from_cache(text, dest_language)
         if cached_translation:
             app.logger.debug(f'Cache hit: {cached_translation}')
@@ -55,7 +54,6 @@ def translate():
 
         translated_text = translate_text(text, dest_language)
 
-        # Salvar a tradução no cache do Redis
         save_translation_to_cache(text, translated_text, dest_language)
 
         return jsonify({'translated_text': translated_text})
@@ -64,6 +62,7 @@ def translate():
         return jsonify({'error': str(e)}), 500
 
 
+#POST do text-to-Speech
 @app.route('/speak', methods=['POST'])
 def speak():
     try:
@@ -88,14 +87,8 @@ def speak():
         app.logger.error(f'Error generating speech: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
-def send_audio(audio_data):
-    response = make_response(audio_data)
-    response.headers['Content-Type'] = 'audio/wav'
-    response.headers['Content-Disposition'] = 'inline; filename="audio.wav"'
-    return response
         
-
-
+#POST da tradução do PDF
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
     app.logger.info('Upload PDF endpoint accessed')
@@ -133,8 +126,14 @@ def upload_pdf():
     except Exception as e:
         app.logger.error(f'Error uploading and translating PDF: {str(e)}')
         return jsonify({'error': str(e)}), 500
+   
     
 
+def send_audio(audio_data):
+    response = make_response(audio_data)
+    response.headers['Content-Type'] = 'audio/wav'
+    response.headers['Content-Disposition'] = 'inline; filename="audio.wav"'
+    return response
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'pdf'}

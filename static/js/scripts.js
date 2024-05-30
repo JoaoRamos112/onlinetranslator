@@ -65,7 +65,7 @@ const textInput = document.getElementById('text-input');
 
 recordButton.addEventListener('click', () => {
     const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = 'pt-PT'; // Set the language to Portuguese (Portugal)
+    recognition.lang = 'pt-PT'; 
     recognition.interimResults = false;
 
     recognition.onstart = function () {
