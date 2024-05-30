@@ -88,6 +88,12 @@ def speak():
         app.logger.error(f'Error generating speech: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
+def send_audio(audio_data):
+    response = make_response(audio_data)
+    response.headers['Content-Type'] = 'audio/wav'
+    response.headers['Content-Disposition'] = 'inline; filename="audio.wav"'
+    return response
+        
 
 
 @app.route('/upload_pdf', methods=['POST'])
@@ -128,12 +134,6 @@ def upload_pdf():
         app.logger.error(f'Error uploading and translating PDF: {str(e)}')
         return jsonify({'error': str(e)}), 500
     
-
-def send_audio(audio_data):
-    response = make_response(audio_data)
-    response.headers['Content-Type'] = 'audio/wav'
-    response.headers['Content-Disposition'] = 'inline; filename="audio.wav"'
-    return response
 
 
 def allowed_file(filename):
