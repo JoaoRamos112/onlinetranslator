@@ -79,14 +79,16 @@ def speak():
         result = speech_synthesizer.speak_text_async(text).get()
 
         if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-            app.logger.info(f"Speech synthesized for text [{text}]")
-            return jsonify({'status': 'success'})
+            audio_data = result.audio
+            return send_audio(audio_data)
         else:
             app.logger.error(f"Speech synthesis failed: {result.error_details}")
             return jsonify({'error': result.error_details}), 500
     except Exception as e:
         app.logger.error(f'Error generating speech: {str(e)}')
         return jsonify({'error': str(e)}), 500
+
+
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
@@ -125,6 +127,13 @@ def upload_pdf():
     except Exception as e:
         app.logger.error(f'Error uploading and translating PDF: {str(e)}')
         return jsonify({'error': str(e)}), 500
+    
+
+def send_audio(audio_data):
+    response = make_response(audio_data)
+    response.headers['Content-Type'] = 'audio/wav'
+    response.headers['Content-Disposition'] = 'inline; filename="audio.wav"'
+    return response
 
 
 def allowed_file(filename):
