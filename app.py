@@ -5,25 +5,38 @@ import os
 from PyPDF2 import PdfReader
 from fpdf import FPDF
 import azure.cognitiveservices.speech as speechsdk
+import redis
 
 app = Flask(__name__)
 
-# Configurações da API do Azure
+# Configurações da API do Azuree
 subscription_key = '683d4d5e89244d31b649623d60c684ff'
 endpoint = 'https://api.cognitive.microsofttranslator.com'
 location = 'francecentral'
 
+# Configurações do Azure Speech
 speech_key = '9cad95fdff5449f2bd01335c5b840dcc'
 speech_region = 'eastus'
+
+# Configurações do Redis
+redis_host = 'translatorcn.redis.cache.windows.net'
+redis_port = 6379
+redis_password = 'QruzOK0wvBVyH96TnipvG3BNYSeSN9YDWAzCaHucXiI='
+
+
+def get_redis_client():
+    return redis.StrictRedis(host=redis_host, port=redis_port, password=redis_password, decode_responses=True)
 
 
 @app.route('/')
 def index():
+    app.logger.info('Index page accessed')
     return render_template('index.html')
 
 
 @app.route('/translate', methods=['POST'])
 def translate():
+    app.logger.info('Translate endpoint accessed')
     try:
         data = request.get_json()
         text = data.get('text')
@@ -32,54 +45,88 @@ def translate():
         if not dest_language:
             raise ValueError("Destination language is required")
 
+        app.logger.debug(f'Translating text: {text} to {dest_language}')
+
+        # Verificar o cache do Redis
+        cached_translation = get_translation_from_cache(text, dest_language)
+        if cached_translation:
+            app.logger.debug(f'Cache hit: {cached_translation}')
+            return jsonify({'translated_text': cached_translation})
+
         translated_text = translate_text(text, dest_language)
+
+        # Salvar a tradução no cache do Redis
+        save_translation_to_cache(text, translated_text, dest_language)
 
         return jsonify({'translated_text': translated_text})
     except Exception as e:
+        app.logger.error(f'Error translating text: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/speak', methods=['POST'])
 def speak():
+    app.logger.info('Speak endpoint accessed')
     try:
         data = request.get_json()
         text = data.get('text')
 
-        audio_file = generate_speech(text)
+        speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
+        audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+        speech_config.speech_synthesis_voice_name = 'en-US-AvaNeural'
 
-        return send_file(audio_file, mimetype='audio/mpeg')
+        speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+
+        app.logger.debug(f'Generating speech for text: {text}')
+        result = speech_synthesizer.speak_text_async(text).get()
+
+        if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+            app.logger.info(f"Speech synthesized for text [{text}]")
+            return jsonify({'status': 'success'})
+        else:
+            app.logger.error(f"Speech synthesis failed: {result.error_details}")
+            return jsonify({'error': result.error_details}), 500
     except Exception as e:
+        app.logger.error(f'Error generating speech: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 
 @app.route('/upload_pdf', methods=['POST'])
 def upload_pdf():
+    app.logger.info('Upload PDF endpoint accessed')
     try:
         if 'file' not in request.files:
+            app.logger.error('No file part in the request')
             return jsonify({'error': 'No file part'}), 400
 
         file = request.files['file']
 
         if file.filename == '':
+            app.logger.error('No selected file')
             return jsonify({'error': 'No selected file'}), 400
 
         dest_language = request.form.get('language')
 
         if not dest_language:
+            app.logger.error('Destination language is required')
             return jsonify({'error': 'Destination language is required'}), 400
 
         if file and allowed_file(file.filename):
             filename = os.path.join('uploads', file.filename)
             file.save(filename)
 
+            app.logger.debug(f'Translating PDF file: {filename} to {dest_language}')
             translated_text = translate_pdf(filename, dest_language)
 
             translated_pdf_path = create_translated_pdf(translated_text)
+            app.logger.debug(f'Translated PDF saved to: {translated_pdf_path}')
 
             return send_file(translated_pdf_path, as_attachment=True)
 
+        app.logger.error('Invalid file type')
         return jsonify({'error': 'Invalid file type'}), 400
     except Exception as e:
+        app.logger.error(f'Error uploading and translating PDF: {str(e)}')
         return jsonify({'error': str(e)}), 500
 
 
@@ -107,6 +154,7 @@ def translate_text(text, dest_language):
         'to': [dest_language]
     }
 
+    app.logger.debug(f'Sending translation request: {constructed_url} with params: {params} and body: {body}')
     response = requests.post(constructed_url, params=params, headers=headers, json=body)
     response_json = response.json()
 
@@ -114,6 +162,8 @@ def translate_text(text, dest_language):
         raise ValueError(f"Translation API error: {response_json}")
 
     translated_text = response_json[0]['translations'][0]['text']
+
+    app.logger.debug(f'Received translated text: {translated_text}')
     return translated_text
 
 
@@ -141,19 +191,17 @@ def create_translated_pdf(translated_text):
     return translated_pdf_path
 
 
-def generate_speech(text):
-    speech_config = speechsdk.SpeechConfig(subscription=speech_key, region=speech_region)
-    audio_config = speechsdk.audio.AudioOutputConfig(filename='output.mp3')
+def save_translation_to_cache(text, translated_text, dest_language):
+    client = get_redis_client()
+    key = f"{text}:{dest_language}"
+    client.set(key, translated_text)
 
-    speech_config.speech_synthesis_voice_name = 'en-US-AvaMultilingualNeural'
 
-    speech_synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-    result = speech_synthesizer.speak_text_async(text).get()
+def get_translation_from_cache(text, dest_language):
+    client = get_redis_client()
+    key = f"{text}:{dest_language}"
+    return client.get(key)
 
-    if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
-        return 'output.mp3'
-    else:
-        raise Exception("Speech synthesis failed")
 
 if __name__ == '__main__':
     if not os.path.exists('uploads'):
